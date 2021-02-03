@@ -434,9 +434,15 @@ def parse(pathobj):
                 if command == lastcommand:
                     outstring.pop(0)
 
-            # suppress a G80 between two identical command
-            if command == "G80" and lastcommand == nextcommand:
-                continue
+            if command == "G80":
+                # Q & R don't persist across canned cycles
+                if 'R' in currLocation:
+                    del(currLocation['R'])
+                if 'Q' in currLocation:
+                    del(currLocation['Q'])
+                # suppress a G80 between two identical command
+                if lastcommand == nextcommand:
+                    continue
 
             if c.Name[0] == '(' and not OUTPUT_COMMENTS: # command is a comment
                 continue
