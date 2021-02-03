@@ -380,53 +380,6 @@ def parse(pathobj):
                 if command == "G0":
                     continue
 
-            # if it's a tap, we rigid tap, so don't start the spindle yet...
-            if command == "M03" or command == "M3":
-                if pathobj.Tool.ToolType == "Tap":
-                    tapSpeed = int(pathobj.SpindleSpeed)
-                    continue
-
-            # convert drill cycles to tap cycles if tool is a tap
-            if command == "G81" or command == "G83":
-                if hasattr(pathobj, 'ToolController') and pathobj.ToolController.Tool.ToolType == "Tap":
-                    command = "G84"
-                    out += linenumber() + "G95\n"
-                    paramstring = ""
-                    for param in [ "X", "Y" ]:
-                        if param in c.Parameters:
-                            if (not OUTPUT_DOUBLES) and (param in currLocation) and (currLocation[param] == c.Parameters[param]):
-                                continue
-                            else:
-                                pos = Units.Quantity(c.Parameters[param], FreeCAD.Units.Length)
-                                paramstring += " " + param + format(float(pos.getValueAs(UNIT_FORMAT)), precision_string)
-                    if paramstring != "":
-                        out += linenumber() + "G00"+paramstring+"\n"
-
-                    if "S" in c.Parameters:
-                        tapSpeed = int(c.Parameters['S'])
-                    out += "M29 S"+str(tapSpeed)+"\n"
-
-                    for param in [ "Z", "R" ]:
-                        if param in c.Parameters:
-                            if (not OUTPUT_DOUBLES) and (param in currLocation) and (currLocation[param] == c.Parameters[param]):
-                                continue
-                            else:
-                                pos = Units.Quantity(c.Parameters[param], FreeCAD.Units.Length)
-                                paramstring += " " + param + format(float(pos.getValueAs(UNIT_FORMAT)), precision_string)
-                    # in this mode, F is the distance per revolution of the thread (pitch)
-                    # P is the dwell time in seconds at the bottom of the thread
-                    # Q is the peck depth of the threading operation
-                    for param in [ "F", "P", "Q" ]:
-                        if param in c.Parameters:
-                            value = Units.Quantity(c.Parameters[param], FreeCAD.Units.Length)
-                            paramstring += " " + param + format(float(value.getValueAs(UNIT_FORMAT)), precision_string) 
-
-                    out += linenumber() + "G84" + paramstring + "\n"
-                    out += linenumber() + "G80\n"
-                    out += linenumber() + "G94\n"
-                    continue
-
-
             outstring.append(command)
 
             # if modal: suppress the command if it is the same as the last one
